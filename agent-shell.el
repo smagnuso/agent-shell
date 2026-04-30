@@ -4302,7 +4302,8 @@ Falls back to latest session in batch mode (e.g. tests)."
                                                    `((:model-id . ,(map-elt model 'modelId))
                                                      (:name . ,(map-elt model 'name))
                                                      (:description . ,(map-elt model 'description))))
-                                                 (map-nested-elt acp-response '(models availableModels)))))))
+                                                 (map-nested-elt acp-response '(models availableModels))))
+                           (cons :title (map-nested-elt agent-shell--state '(:session :title))))))
 
 (cl-defun agent-shell--finalize-session-init (&key on-session-init)
   "Finalize session initialization and invoke ON-SESSION-INIT."
@@ -4346,20 +4347,9 @@ Falls back to latest session in batch mode (e.g. tests)."
              :mcp-servers (agent-shell--mcp-servers))
    :buffer (current-buffer)
    :on-success (lambda (acp-response)
-                 (map-put! agent-shell--state
-                           :session (list (cons :id (map-elt acp-response 'sessionId))
-                                          (cons :mode-id (map-nested-elt acp-response '(modes currentModeId)))
-                                          (cons :modes (mapcar (lambda (mode)
-                                                                 `((:id . ,(map-elt mode 'id))
-                                                                   (:name . ,(map-elt mode 'name))
-                                                                   (:description . ,(map-elt mode 'description))))
-                                                               (map-nested-elt acp-response '(modes availableModes))))
-                                          (cons :model-id (map-nested-elt acp-response '(models currentModelId)))
-                                          (cons :models (mapcar (lambda (model)
-                                                                  `((:model-id . ,(map-elt model 'modelId))
-                                                                    (:name . ,(map-elt model 'name))
-                                                                    (:description . ,(map-elt model 'description))))
-                                                                (map-nested-elt acp-response '(models availableModels))))))
+                 (agent-shell--set-session-from-response
+                  :acp-response acp-response
+                  :acp-session-id (map-elt acp-response 'sessionId))
                  (agent-shell--update-fragment
                   :state agent-shell--state
                   :block-id "starting"
